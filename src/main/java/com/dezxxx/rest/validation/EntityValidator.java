@@ -11,35 +11,29 @@ public final class EntityValidator {
     }
 
     public static void validate(User user) {
-        if (user == null) {
-            throw new ValidationException("User must not be null");
-        }
-        if (user.getName() == null || user.getName().isBlank()) {
-            throw new ValidationException("User name must not be blank");
-        }
+        requireNonNull(user, "User must not be null");
+        requireNonBlank(user.getName(), "User name must not be blank");
     }
 
     public static void validate(File file) {
-        if (file == null) {
-            throw new ValidationException("File must not be null");
-        }
-        if (file.getName() == null || file.getName().isBlank()) {
-            throw new ValidationException("File name must not be blank");
-        }
-        if (file.getFilePath() == null || file.getFilePath().isBlank()) {
-            throw new ValidationException("File path must not be blank");
-        }
+        requireNonNull(file, "File must not be null");
+        requireNonBlank(file.getName(), "File name must not be blank");
+        requireNonBlank(file.getFilePath(), "File path must not be blank");
     }
 
     public static void validate(Event event) {
-        if (event == null) {
-            throw new ValidationException("Event must not be null");
-        }
-        if (event.getUser() == null || event.getUser().getId() == null) {
-            throw new ValidationException("Event must have a valid user id");
-        }
-        if (event.getFile() == null || event.getFile().getId() == null) {
-            throw new ValidationException("Event must have a valid file id");
-        }
+        requireNonNull(event, "Event must not be null");
+        requireNonNull(event.getUser(), "Event must have a valid user id");
+        requireNonNull(event.getUser().getId(), "Event must have a valid user id");
+        requireNonNull(event.getFile(), "Event must have a valid file id");
+        requireNonNull(event.getFile().getId(), "Event must have a valid file id");
+    }
+
+    private static void requireNonNull(Object value, String message) {
+        if (value == null) throw new ValidationException(message);
+    }
+
+    private static void requireNonBlank(String value, String message) {
+        if (value == null || value.isBlank()) throw new ValidationException(message);
     }
 }
