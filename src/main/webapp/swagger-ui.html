@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>File Manager API</title>
+    <link rel="stylesheet" href="/REST_API/webjars/swagger-ui/5.18.2/swagger-ui.css">
+</head>
+<body>
+<div id="swagger-ui"></div>
+<script src="/REST_API/webjars/swagger-ui/5.18.2/swagger-ui-bundle.js"></script>
+<script>
+    SwaggerUIBundle({
+        url: "/REST_API/api-docs",
+        dom_id: '#swagger-ui',
+        presets: [SwaggerUIBundle.presets.apis],
+        layout: "BaseLayout"
+    });
+</script>
+</body>
+</html>
