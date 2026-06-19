@@ -9,9 +9,14 @@ target/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.idea/workspace.xml
+.idea/dbnavigator.xml
 *.iws
 *.iml
 *.ipr
+
+### Generated artifacts ###
+*.war
 
 ### Eclipse ###
 .apt_generated

@@ -26,7 +26,11 @@ public class UserRepositoryImpl implements Repository<User> {
     public Optional<User> findById(Integer id) {
         return TransactionHelper.executeInSession(session -> {
             log.debug("findById user: id={}", id);
-            return Optional.ofNullable(session.get(User.class, id));
+            return session.createQuery(
+                            "SELECT u FROM User u LEFT JOIN FETCH u.events ev LEFT JOIN FETCH ev.file WHERE u.id = :id",
+                            User.class)
+                    .setParameter("id", id)
+                    .uniqueResultOptional();
         });
     }
 
@@ -34,7 +38,10 @@ public class UserRepositoryImpl implements Repository<User> {
     public List<User> findAll() {
         return TransactionHelper.executeInSession(session -> {
             log.debug("findAll users");
-            return session.createQuery("FROM User", User.class).list();
+            return session.createQuery(
+                            "SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.events ev LEFT JOIN FETCH ev.file",
+                            User.class)
+                    .list();
         });
     }
 

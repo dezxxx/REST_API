@@ -26,7 +26,11 @@ public class EventRepositoryImpl implements EventRepository {
     public Optional<Event> findById(Integer id) {
         return TransactionHelper.executeInSession(session -> {
             log.debug("findById event: id={}", id);
-            return Optional.ofNullable(session.get(Event.class, id));
+            return session.createQuery(
+                            "SELECT e FROM Event e LEFT JOIN FETCH e.file WHERE e.id = :id",
+                            Event.class)
+                    .setParameter("id", id)
+                    .uniqueResultOptional();
         });
     }
 
@@ -34,7 +38,10 @@ public class EventRepositoryImpl implements EventRepository {
     public List<Event> findAll() {
         return TransactionHelper.executeInSession(session -> {
             log.debug("findAll events");
-            return session.createQuery("FROM Event", Event.class).list();
+            return session.createQuery(
+                            "SELECT e FROM Event e LEFT JOIN FETCH e.file",
+                            Event.class)
+                    .list();
         });
     }
 
@@ -42,7 +49,9 @@ public class EventRepositoryImpl implements EventRepository {
     public List<Event> findByUserId(Integer userId) {
         return TransactionHelper.executeInSession(session -> {
             log.debug("findByUserId: userId={}", userId);
-            return session.createQuery("FROM Event e WHERE e.user.id = :userId", Event.class)
+            return session.createQuery(
+                            "SELECT e FROM Event e LEFT JOIN FETCH e.file WHERE e.user.id = :userId",
+                            Event.class)
                     .setParameter("userId", userId)
                     .list();
         });
