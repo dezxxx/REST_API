@@ -3,14 +3,13 @@ package com.dezxxx.rest.service.impl;
 import com.dezxxx.rest.exception.EntityNotFoundException;
 import com.dezxxx.rest.model.File;
 import com.dezxxx.rest.repository.Repository;
-import com.dezxxx.rest.service.FileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
 
-public class FileServiceImpl implements FileService {
+public class FileServiceImpl implements Repository<File> {
 
     private static final Logger log = LoggerFactory.getLogger(FileServiceImpl.class);
 

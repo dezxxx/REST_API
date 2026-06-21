@@ -1,7 +1,7 @@
 package com.dezxxx.rest.servlet;
 
 import com.dezxxx.rest.model.File;
-import com.dezxxx.rest.service.FileService;
+import com.dezxxx.rest.repository.Repository;
 import com.dezxxx.rest.util.JsonUtil;
 import com.dezxxx.rest.validation.EntityValidator;
 
@@ -13,11 +13,11 @@ import java.io.IOException;
 @WebServlet("/files/*")
 public class FileServlet extends BaseServlet {
 
-    private FileService fileService;
+    private Repository<File> fileService;
 
     @Override
     public void init() {
-        fileService = (FileService) getServletContext().getAttribute("fileService");
+        fileService = (Repository<File>) getServletContext().getAttribute("fileService");
     }
 
     @Override
@@ -66,6 +66,10 @@ public class FileServlet extends BaseServlet {
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             Integer id = extractId(req);
+            if (id == null) {
+                JsonUtil.writeError(resp, HttpServletResponse.SC_BAD_REQUEST, "ID is required");
+                return;
+            }
             File file = JsonUtil.readBody(req, File.class);
             EntityValidator.validate(file);
             file.setId(id);
@@ -80,6 +84,10 @@ public class FileServlet extends BaseServlet {
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             Integer id = extractId(req);
+            if (id == null) {
+                JsonUtil.writeError(resp, HttpServletResponse.SC_BAD_REQUEST, "ID is required");
+                return;
+            }
             fileService.delete(id);
             resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
         } catch (Exception e) {

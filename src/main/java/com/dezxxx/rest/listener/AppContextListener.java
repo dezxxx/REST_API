@@ -29,9 +29,13 @@ public class AppContextListener implements ServletContextListener {
 
         ServletContext ctx = sce.getServletContext();
 
-        ctx.setAttribute("userService", new UserServiceImpl(new UserRepositoryImpl()));
-        ctx.setAttribute("eventService", new EventServiceImpl(new EventRepositoryImpl()));
-        ctx.setAttribute("fileService", new FileServiceImpl(new FileRepositoryImpl()));
+        UserRepositoryImpl userRepository = new UserRepositoryImpl();
+        FileRepositoryImpl fileRepository = new FileRepositoryImpl();
+        EventRepositoryImpl eventRepository = new EventRepositoryImpl();
+
+        ctx.setAttribute("userService", new UserServiceImpl(userRepository));
+        ctx.setAttribute("fileService", new FileServiceImpl(fileRepository));
+        ctx.setAttribute("eventService", new EventServiceImpl(eventRepository, userRepository, fileRepository));
 
         log.info("Application started successfully");
     }

@@ -2,27 +2,41 @@ package com.dezxxx.rest.service.impl;
 
 import com.dezxxx.rest.exception.EntityNotFoundException;
 import com.dezxxx.rest.model.Event;
+import com.dezxxx.rest.model.File;
+import com.dezxxx.rest.model.User;
 import com.dezxxx.rest.repository.EventRepository;
-import com.dezxxx.rest.service.EventService;
+import com.dezxxx.rest.repository.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
 
-public class EventServiceImpl implements EventService {
+public class EventServiceImpl implements EventRepository {
 
     private static final Logger log = LoggerFactory.getLogger(EventServiceImpl.class);
 
     private final EventRepository eventRepository;
+    private final Repository<User> userRepository;
+    private final Repository<File> fileRepository;
 
-    public EventServiceImpl(EventRepository eventRepository) {
+    public EventServiceImpl(EventRepository eventRepository,
+                            Repository<User> userRepository,
+                            Repository<File> fileRepository) {
         this.eventRepository = eventRepository;
+        this.userRepository = userRepository;
+        this.fileRepository = fileRepository;
     }
 
     @Override
     public Event create(Event event) {
-        log.info("Creating event");
+        Integer userId = event.getUser().getId();
+        Integer fileId = event.getFile().getId();
+        userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User", userId));
+        fileRepository.findById(fileId)
+                .orElseThrow(() -> new EntityNotFoundException("File", fileId));
+        log.info("Creating event: userId={}, fileId={}", userId, fileId);
         return eventRepository.create(event);
     }
 

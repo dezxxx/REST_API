@@ -89,4 +89,22 @@ class EntityValidatorTest {
     void validateEvent_shouldThrow_whenEventIsNull() {
         assertThrows(ValidationException.class, () -> EntityValidator.validate((Event) null));
     }
+
+    @Test
+    void validateUser_shouldThrow_whenNameExceedsMaxLength() {
+        User user = new User("A".repeat(256));
+        assertThrows(ValidationException.class, () -> EntityValidator.validate(user));
+    }
+
+    @Test
+    void validateFile_shouldThrow_whenNameExceedsMaxLength() {
+        File file = new File("A".repeat(256), "/uploads/report.pdf");
+        assertThrows(ValidationException.class, () -> EntityValidator.validate(file));
+    }
+
+    @Test
+    void validateFile_shouldThrow_whenFilePathExceedsMaxLength() {
+        File file = new File("report.pdf", "/".repeat(501));
+        assertThrows(ValidationException.class, () -> EntityValidator.validate(file));
+    }
 }

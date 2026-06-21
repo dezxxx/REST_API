@@ -1,6 +1,6 @@
 package com.dezxxx.rest.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.util.Objects;
@@ -15,7 +15,7 @@ public class Event {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonBackReference
+    @JsonIgnoreProperties("events")
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)

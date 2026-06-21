@@ -3,6 +3,7 @@ package com.dezxxx.rest.servlet;
 import com.dezxxx.rest.exception.EntityNotFoundException;
 import com.dezxxx.rest.exception.ValidationException;
 import com.dezxxx.rest.util.JsonUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,10 @@ public abstract class BaseServlet extends HttpServlet {
         } else if (e instanceof IllegalArgumentException) {
             log.warn(e.getMessage());
             JsonUtil.writeError(resp, HttpServletResponse.SC_BAD_REQUEST, e.getMessage());
+        } else if (e instanceof JsonProcessingException
+                || (e.getCause() instanceof JsonProcessingException)) {
+            log.warn("Invalid JSON: {}", e.getMessage());
+            JsonUtil.writeError(resp, HttpServletResponse.SC_BAD_REQUEST, "Invalid or missing JSON body");
         } else {
             log.error("Unexpected error", e);
             JsonUtil.writeError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal server error");

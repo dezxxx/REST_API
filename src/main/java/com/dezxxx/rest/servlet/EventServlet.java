@@ -1,7 +1,7 @@
 package com.dezxxx.rest.servlet;
 
 import com.dezxxx.rest.model.Event;
-import com.dezxxx.rest.service.EventService;
+import com.dezxxx.rest.repository.EventRepository;
 import com.dezxxx.rest.util.JsonUtil;
 import com.dezxxx.rest.validation.EntityValidator;
 
@@ -13,11 +13,11 @@ import java.io.IOException;
 @WebServlet("/events/*")
 public class EventServlet extends BaseServlet {
 
-    private EventService eventService;
+    private EventRepository eventService;
 
     @Override
     public void init() {
-        eventService = (EventService) getServletContext().getAttribute("eventService");
+        eventService = (EventRepository) getServletContext().getAttribute("eventService");
     }
 
     @Override
@@ -74,6 +74,10 @@ public class EventServlet extends BaseServlet {
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             Integer id = extractId(req);
+            if (id == null) {
+                JsonUtil.writeError(resp, HttpServletResponse.SC_BAD_REQUEST, "ID is required");
+                return;
+            }
             Event event = JsonUtil.readBody(req, Event.class);
             EntityValidator.validate(event);
             event.setId(id);
@@ -88,6 +92,10 @@ public class EventServlet extends BaseServlet {
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             Integer id = extractId(req);
+            if (id == null) {
+                JsonUtil.writeError(resp, HttpServletResponse.SC_BAD_REQUEST, "ID is required");
+                return;
+            }
             eventService.delete(id);
             resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
         } catch (Exception e) {

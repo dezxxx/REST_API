@@ -1,7 +1,7 @@
 package com.dezxxx.rest.servlet;
 
 import com.dezxxx.rest.model.User;
-import com.dezxxx.rest.service.UserService;
+import com.dezxxx.rest.repository.Repository;
 import com.dezxxx.rest.util.JsonUtil;
 import com.dezxxx.rest.validation.EntityValidator;
 
@@ -13,11 +13,11 @@ import java.io.IOException;
 @WebServlet("/users/*")
 public class UserServlet extends BaseServlet {
 
-    private UserService userService;
+    private Repository<User> userService;
 
     @Override
     public void init() {
-        userService = (UserService) getServletContext().getAttribute("userService");
+        userService = (Repository<User>) getServletContext().getAttribute("userService");
     }
 
     @Override
@@ -66,6 +66,10 @@ public class UserServlet extends BaseServlet {
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             Integer id = extractId(req);
+            if (id == null) {
+                JsonUtil.writeError(resp, HttpServletResponse.SC_BAD_REQUEST, "ID is required");
+                return;
+            }
             User user = JsonUtil.readBody(req, User.class);
             EntityValidator.validate(user);
             user.setId(id);
@@ -80,6 +84,10 @@ public class UserServlet extends BaseServlet {
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             Integer id = extractId(req);
+            if (id == null) {
+                JsonUtil.writeError(resp, HttpServletResponse.SC_BAD_REQUEST, "ID is required");
+                return;
+            }
             userService.delete(id);
             resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
         } catch (Exception e) {

@@ -5,6 +5,7 @@ import com.dezxxx.rest.model.Event;
 import com.dezxxx.rest.model.File;
 import com.dezxxx.rest.model.User;
 import com.dezxxx.rest.repository.EventRepository;
+import com.dezxxx.rest.repository.Repository;
 import com.dezxxx.rest.service.impl.EventServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,22 +25,66 @@ class EventServiceImplTest {
     @Mock
     private EventRepository eventRepository;
 
+    @Mock
+    private Repository<User> userRepository;
+
+    @Mock
+    private Repository<File> fileRepository;
+
     private EventServiceImpl eventService;
 
     @BeforeEach
     void setUp() {
-        eventService = new EventServiceImpl(eventRepository);
+        eventService = new EventServiceImpl(eventRepository, userRepository, fileRepository);
     }
 
     @Test
     void create_shouldReturnCreatedEvent() {
-        Event event = new Event(new User("Ivan"), new File("report.pdf", "/uploads/report.pdf"));
+        User user = new User("Ivan");
+        user.setId(1);
+        File file = new File("report.pdf", "/uploads/report.pdf");
+        file.setId(2);
+        Event event = new Event(user, file);
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(fileRepository.findById(2)).thenReturn(Optional.of(file));
         when(eventRepository.create(event)).thenReturn(event);
 
         Event result = eventService.create(event);
 
         assertEquals(event, result);
+        verify(userRepository).findById(1);
+        verify(fileRepository).findById(2);
         verify(eventRepository).create(event);
+    }
+
+    @Test
+    void create_shouldThrowEntityNotFoundException_whenUserNotExists() {
+        User user = new User("Ivan");
+        user.setId(99);
+        File file = new File("report.pdf", "/uploads/report.pdf");
+        file.setId(2);
+        Event event = new Event(user, file);
+
+        when(userRepository.findById(99)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> eventService.create(event));
+        verify(eventRepository, never()).create(any());
+    }
+
+    @Test
+    void create_shouldThrowEntityNotFoundException_whenFileNotExists() {
+        User user = new User("Ivan");
+        user.setId(1);
+        File file = new File("report.pdf", "/uploads/report.pdf");
+        file.setId(99);
+        Event event = new Event(user, file);
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(fileRepository.findById(99)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> eventService.create(event));
+        verify(eventRepository, never()).create(any());
     }
 
     @Test

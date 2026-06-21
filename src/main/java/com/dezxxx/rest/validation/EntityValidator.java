@@ -11,29 +11,49 @@ public final class EntityValidator {
     }
 
     public static void validate(User user) {
-        requireNonNull(user, "User must not be null");
-        requireNonBlank(user.getName(), "User name must not be blank");
+        chain(user, "User")
+                .notBlank(user.getName(), "User name")
+                .maxLength(user.getName(), 255, "User name");
     }
 
     public static void validate(File file) {
-        requireNonNull(file, "File must not be null");
-        requireNonBlank(file.getName(), "File name must not be blank");
-        requireNonBlank(file.getFilePath(), "File path must not be blank");
+        chain(file, "File")
+                .notBlank(file.getName(), "File name")
+                .maxLength(file.getName(), 255, "File name")
+                .notBlank(file.getFilePath(), "File path")
+                .maxLength(file.getFilePath(), 500, "File path");
     }
 
     public static void validate(Event event) {
-        requireNonNull(event, "Event must not be null");
-        requireNonNull(event.getUser(), "Event must have a valid user id");
-        requireNonNull(event.getUser().getId(), "Event must have a valid user id");
-        requireNonNull(event.getFile(), "Event must have a valid file id");
-        requireNonNull(event.getFile().getId(), "Event must have a valid file id");
+        chain(event, "Event")
+                .notNull(event.getUser(), "Event must have a valid user id")
+                .notNull(event.getUser().getId(), "Event must have a valid user id")
+                .notNull(event.getFile(), "Event must have a valid file id")
+                .notNull(event.getFile().getId(), "Event must have a valid file id");
     }
 
-    private static void requireNonNull(Object value, String message) {
-        if (value == null) throw new ValidationException(message);
+    private static ValidationChain chain(Object root, String entityName) {
+        if (root == null) throw new ValidationException(entityName + " must not be null");
+        return new ValidationChain();
     }
 
-    private static void requireNonBlank(String value, String message) {
-        if (value == null || value.isBlank()) throw new ValidationException(message);
+    private static final class ValidationChain {
+
+        ValidationChain notNull(Object value, String message) {
+            if (value == null) throw new ValidationException(message);
+            return this;
+        }
+
+        ValidationChain notBlank(String value, String fieldName) {
+            if (value == null || value.isBlank())
+                throw new ValidationException(fieldName + " must not be blank");
+            return this;
+        }
+
+        ValidationChain maxLength(String value, int max, String fieldName) {
+            if (value != null && value.length() > max)
+                throw new ValidationException(fieldName + " must not exceed " + max + " characters");
+            return this;
+        }
     }
 }
