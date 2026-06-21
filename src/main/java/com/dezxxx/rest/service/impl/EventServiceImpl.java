@@ -1,11 +1,13 @@
 package com.dezxxx.rest.service.impl;
 
+import com.dezxxx.rest.exception.DuplicateEntityException;
 import com.dezxxx.rest.exception.EntityNotFoundException;
 import com.dezxxx.rest.model.Event;
 import com.dezxxx.rest.model.File;
 import com.dezxxx.rest.model.User;
 import com.dezxxx.rest.repository.EventRepository;
 import com.dezxxx.rest.repository.Repository;
+import com.dezxxx.rest.repository.impl.EventRepositoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,11 +18,11 @@ public class EventServiceImpl implements EventRepository {
 
     private static final Logger log = LoggerFactory.getLogger(EventServiceImpl.class);
 
-    private final EventRepository eventRepository;
+    private final EventRepositoryImpl eventRepository;
     private final Repository<User> userRepository;
     private final Repository<File> fileRepository;
 
-    public EventServiceImpl(EventRepository eventRepository,
+    public EventServiceImpl(EventRepositoryImpl eventRepository,
                             Repository<User> userRepository,
                             Repository<File> fileRepository) {
         this.eventRepository = eventRepository;
@@ -36,6 +38,9 @@ public class EventServiceImpl implements EventRepository {
                 .orElseThrow(() -> new EntityNotFoundException("User", userId));
         fileRepository.findById(fileId)
                 .orElseThrow(() -> new EntityNotFoundException("File", fileId));
+        if (eventRepository.existsByUserAndFile(userId, fileId)) {
+            throw new DuplicateEntityException("Event already exists for user " + userId + " and file " + fileId);
+        }
         log.info("Creating event: userId={}, fileId={}", userId, fileId);
         return eventRepository.create(event);
     }

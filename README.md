@@ -78,6 +78,7 @@ Swagger UI is accessible without authentication.
 | 400 | Invalid/missing JSON body, blank fields, field too long, missing ID in path |
 | 401 | Missing or invalid Authorization header |
 | 404 | Entity not found by id |
+| 409 | Duplicate event — same user + file combination already exists |
 | 500 | Unexpected server error |
 
 ## Running Locally

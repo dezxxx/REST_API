@@ -4,8 +4,8 @@ import com.dezxxx.rest.exception.EntityNotFoundException;
 import com.dezxxx.rest.model.Event;
 import com.dezxxx.rest.model.File;
 import com.dezxxx.rest.model.User;
-import com.dezxxx.rest.repository.EventRepository;
 import com.dezxxx.rest.repository.Repository;
+import com.dezxxx.rest.repository.impl.EventRepositoryImpl;
 import com.dezxxx.rest.service.impl.EventServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 class EventServiceImplTest {
 
     @Mock
-    private EventRepository eventRepository;
+    private EventRepositoryImpl eventRepository;
 
     @Mock
     private Repository<User> userRepository;

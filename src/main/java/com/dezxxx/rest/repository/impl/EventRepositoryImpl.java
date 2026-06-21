@@ -13,12 +13,20 @@ public class EventRepositoryImpl implements EventRepository {
 
     private static final Logger log = LoggerFactory.getLogger(EventRepositoryImpl.class);
 
+    private static final String FETCH_BY_ID =
+            "SELECT e FROM Event e JOIN FETCH e.user JOIN FETCH e.file WHERE e.id = :id";
+
     @Override
     public Event create(Event event) {
         return TransactionHelper.executeInTransaction(session -> {
             session.persist(event);
-            log.info("Event created: id={}", event.getId());
-            return event;
+            // После persist получаем id, но поля user и file частично null (только id из запроса).
+            // Перечитываем из БД чтобы вернуть полный объект.
+            Event created = session.createQuery(FETCH_BY_ID, Event.class)
+                    .setParameter("id", event.getId())
+                    .uniqueResult();
+            log.info("Event created: id={}", created.getId());
+            return created;
         });
     }
 
@@ -26,9 +34,7 @@ public class EventRepositoryImpl implements EventRepository {
     public Optional<Event> findById(Integer id) {
         return TransactionHelper.executeInSession(session -> {
             log.debug("findById event: id={}", id);
-            return session.createQuery(
-                            "SELECT e FROM Event e LEFT JOIN FETCH e.file WHERE e.id = :id",
-                            Event.class)
+            return session.createQuery(FETCH_BY_ID, Event.class)
                     .setParameter("id", id)
                     .uniqueResultOptional();
         });
@@ -39,7 +45,7 @@ public class EventRepositoryImpl implements EventRepository {
         return TransactionHelper.executeInSession(session -> {
             log.debug("findAll events");
             return session.createQuery(
-                            "SELECT e FROM Event e LEFT JOIN FETCH e.file",
+                            "SELECT e FROM Event e JOIN FETCH e.user JOIN FETCH e.file",
                             Event.class)
                     .list();
         });
@@ -50,7 +56,7 @@ public class EventRepositoryImpl implements EventRepository {
         return TransactionHelper.executeInSession(session -> {
             log.debug("findByUserId: userId={}", userId);
             return session.createQuery(
-                            "SELECT e FROM Event e LEFT JOIN FETCH e.file WHERE e.user.id = :userId",
+                            "SELECT e FROM Event e JOIN FETCH e.user JOIN FETCH e.file WHERE e.user.id = :userId",
                             Event.class)
                     .setParameter("userId", userId)
                     .list();
@@ -60,9 +66,24 @@ public class EventRepositoryImpl implements EventRepository {
     @Override
     public Event update(Event event) {
         return TransactionHelper.executeInTransaction(session -> {
-            Event updated = session.merge(event);
-            log.info("Event updated: id={}", event.getId());
+            session.merge(event);
+            Event updated = session.createQuery(FETCH_BY_ID, Event.class)
+                    .setParameter("id", event.getId())
+                    .uniqueResult();
+            log.info("Event updated: id={}", updated.getId());
             return updated;
+        });
+    }
+
+    public boolean existsByUserAndFile(Integer userId, Integer fileId) {
+        return TransactionHelper.executeInSession(session -> {
+            Long count = session.createQuery(
+                            "SELECT COUNT(e) FROM Event e WHERE e.user.id = :userId AND e.file.id = :fileId",
+                            Long.class)
+                    .setParameter("userId", userId)
+                    .setParameter("fileId", fileId)
+                    .uniqueResult();
+            return count > 0;
         });
     }
 
