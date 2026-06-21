@@ -1,5 +1,6 @@
 package com.dezxxx.rest.servlet;
 
+import com.dezxxx.rest.exception.EntityNotFoundException;
 import com.dezxxx.rest.model.File;
 import com.dezxxx.rest.repository.Repository;
 import com.dezxxx.rest.util.JsonUtil;
@@ -74,6 +75,25 @@ public class FileServlet extends BaseServlet {
             EntityValidator.validate(file);
             file.setId(id);
             File updated = fileService.update(file);
+            JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, updated);
+        } catch (Exception e) {
+            handleException(resp, e);
+        }
+    }
+
+    @Override
+    protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        try {
+            Integer id = extractId(req);
+            if (id == null) {
+                JsonUtil.writeError(resp, HttpServletResponse.SC_BAD_REQUEST, "ID is required");
+                return;
+            }
+            File existing = fileService.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("File", id));
+            File patched = JsonUtil.mergeBody(req, existing);
+            EntityValidator.validate(patched);
+            File updated = fileService.update(patched);
             JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, updated);
         } catch (Exception e) {
             handleException(resp, e);

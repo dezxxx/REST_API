@@ -1,5 +1,6 @@
 package com.dezxxx.rest.servlet;
 
+import com.dezxxx.rest.exception.EntityNotFoundException;
 import com.dezxxx.rest.model.Event;
 import com.dezxxx.rest.repository.EventRepository;
 import com.dezxxx.rest.util.JsonUtil;
@@ -82,6 +83,25 @@ public class EventServlet extends BaseServlet {
             EntityValidator.validate(event);
             event.setId(id);
             Event updated = eventService.update(event);
+            JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, updated);
+        } catch (Exception e) {
+            handleException(resp, e);
+        }
+    }
+
+    @Override
+    protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        try {
+            Integer id = extractId(req);
+            if (id == null) {
+                JsonUtil.writeError(resp, HttpServletResponse.SC_BAD_REQUEST, "ID is required");
+                return;
+            }
+            Event existing = eventService.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Event", id));
+            Event patched = JsonUtil.mergeBody(req, existing);
+            EntityValidator.validate(patched);
+            Event updated = eventService.update(patched);
             JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, updated);
         } catch (Exception e) {
             handleException(resp, e);

@@ -1,5 +1,6 @@
 package com.dezxxx.rest.servlet;
 
+import com.dezxxx.rest.exception.EntityNotFoundException;
 import com.dezxxx.rest.model.User;
 import com.dezxxx.rest.repository.Repository;
 import com.dezxxx.rest.util.JsonUtil;
@@ -74,6 +75,25 @@ public class UserServlet extends BaseServlet {
             EntityValidator.validate(user);
             user.setId(id);
             User updated = userService.update(user);
+            JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, updated);
+        } catch (Exception e) {
+            handleException(resp, e);
+        }
+    }
+
+    @Override
+    protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        try {
+            Integer id = extractId(req);
+            if (id == null) {
+                JsonUtil.writeError(resp, HttpServletResponse.SC_BAD_REQUEST, "ID is required");
+                return;
+            }
+            User existing = userService.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("User", id));
+            User patched = JsonUtil.mergeBody(req, existing);
+            EntityValidator.validate(patched);
+            User updated = userService.update(patched);
             JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, updated);
         } catch (Exception e) {
             handleException(resp, e);

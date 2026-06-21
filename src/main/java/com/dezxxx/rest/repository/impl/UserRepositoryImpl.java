@@ -48,8 +48,13 @@ public class UserRepositoryImpl implements Repository<User> {
     @Override
     public User update(User user) {
         return TransactionHelper.executeInTransaction(session -> {
-            User updated = session.merge(user);
-            log.info("User updated: id={}", user.getId());
+            session.merge(user);
+            User updated = session.createQuery(
+                            "SELECT u FROM User u LEFT JOIN FETCH u.events ev LEFT JOIN FETCH ev.file WHERE u.id = :id",
+                            User.class)
+                    .setParameter("id", user.getId())
+                    .uniqueResult();
+            log.info("User updated: id={}", updated.getId());
             return updated;
         });
     }

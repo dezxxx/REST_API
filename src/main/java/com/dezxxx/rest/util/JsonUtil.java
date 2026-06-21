@@ -18,6 +18,11 @@ public final class JsonUtil {
         return MAPPER.readValue(req.getReader(), clazz);
     }
 
+    // Накладывает только пришедшие поля поверх существующего объекта — для PATCH
+    public static <T> T mergeBody(HttpServletRequest req, T existing) throws IOException {
+        return MAPPER.readerForUpdating(existing).readValue(req.getReader());
+    }
+
     public static void writeResponse(HttpServletResponse resp, int status, Object body) throws IOException {
         resp.setStatus(status);
         resp.setContentType("application/json");

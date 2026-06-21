@@ -67,6 +67,12 @@ public class EventServiceImpl implements EventRepository {
     public Event update(Event event) {
         eventRepository.findById(event.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Event", event.getId()));
+        Integer userId = event.getUser().getId();
+        Integer fileId = event.getFile().getId();
+        userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User", userId));
+        fileRepository.findById(fileId)
+                .orElseThrow(() -> new EntityNotFoundException("File", fileId));
         log.info("Updating event: id={}", event.getId());
         return eventRepository.update(event);
     }

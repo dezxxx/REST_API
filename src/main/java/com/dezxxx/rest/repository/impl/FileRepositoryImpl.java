@@ -41,8 +41,9 @@ public class FileRepositoryImpl implements Repository<File> {
     @Override
     public File update(File file) {
         return TransactionHelper.executeInTransaction(session -> {
-            File updated = session.merge(file);
-            log.info("File updated: id={}", file.getId());
+            session.merge(file);
+            File updated = session.get(File.class, file.getId());
+            log.info("File updated: id={}", updated.getId());
             return updated;
         });
     }

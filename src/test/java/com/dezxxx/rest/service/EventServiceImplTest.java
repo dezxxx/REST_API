@@ -1,5 +1,6 @@
 package com.dezxxx.rest.service;
 
+import com.dezxxx.rest.exception.DuplicateEntityException;
 import com.dezxxx.rest.exception.EntityNotFoundException;
 import com.dezxxx.rest.model.Event;
 import com.dezxxx.rest.model.File;
@@ -84,6 +85,22 @@ class EventServiceImplTest {
         when(fileRepository.findById(99)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> eventService.create(event));
+        verify(eventRepository, never()).create(any());
+    }
+
+    @Test
+    void create_shouldThrowDuplicateEntityException_whenAlreadyExists() {
+        User user = new User("Ivan");
+        user.setId(1);
+        File file = new File("report.pdf", "/uploads/report.pdf");
+        file.setId(2);
+        Event event = new Event(user, file);
+
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+        when(fileRepository.findById(2)).thenReturn(Optional.of(file));
+        when(eventRepository.existsByUserAndFile(1, 2)).thenReturn(true);
+
+        assertThrows(DuplicateEntityException.class, () -> eventService.create(event));
         verify(eventRepository, never()).create(any());
     }
 
