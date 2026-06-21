@@ -126,8 +126,14 @@ paths:
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
-        '204':
-          description: Deleted
+        '200':
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              example:
+                message: "File deleted successfully"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -252,12 +258,26 @@ paths:
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
-        '204':
-          description: Deleted
+        '200':
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              example:
+                message: "File deleted successfully"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          description: File has associated events and cannot be deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Cannot delete file 1: it has 2 associated event(s)"
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -386,8 +406,14 @@ paths:
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
-        '204':
-          description: Deleted
+        '200':
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              example:
+                message: "File deleted successfully"
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -575,6 +601,12 @@ components:
             id:
               type: integer
               example: 1
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
 
     ErrorResponse:
       type: object

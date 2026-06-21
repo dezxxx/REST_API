@@ -1,5 +1,6 @@
 package com.dezxxx.rest.servlet;
 
+import com.dezxxx.rest.exception.DependencyException;
 import com.dezxxx.rest.exception.DuplicateEntityException;
 import com.dezxxx.rest.exception.EntityNotFoundException;
 import com.dezxxx.rest.exception.ValidationException;
@@ -47,7 +48,10 @@ public abstract class BaseServlet extends HttpServlet {
     }
 
     protected void handleException(HttpServletResponse resp, Exception e) throws IOException {
-        if (e instanceof EntityNotFoundException) {
+        if (e instanceof DependencyException) {
+            log.warn(e.getMessage());
+            JsonUtil.writeError(resp, HttpServletResponse.SC_CONFLICT, e.getMessage());
+        } else if (e instanceof EntityNotFoundException) {
             log.warn(e.getMessage());
             JsonUtil.writeError(resp, HttpServletResponse.SC_NOT_FOUND, e.getMessage());
         } else if (e instanceof DuplicateEntityException) {

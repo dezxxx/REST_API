@@ -6,6 +6,7 @@ import com.dezxxx.rest.repository.EventRepository;
 import com.dezxxx.rest.util.JsonUtil;
 import com.dezxxx.rest.validation.EntityValidator;
 
+import java.util.Map;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -117,7 +118,7 @@ public class EventServlet extends BaseServlet {
                 return;
             }
             eventService.delete(id);
-            resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+            JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, Map.of("message", "Event deleted successfully"));
         } catch (Exception e) {
             handleException(resp, e);
         }

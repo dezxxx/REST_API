@@ -1,0 +1,2 @@
+ALTER TABLE events DROP FOREIGN KEY fk_events_file;
+ALTER TABLE events ADD CONSTRAINT fk_events_file FOREIGN KEY (file_id) REFERENCES files (id) ON DELETE RESTRICT;
