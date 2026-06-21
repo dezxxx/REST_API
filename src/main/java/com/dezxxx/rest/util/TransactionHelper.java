@@ -1,5 +1,6 @@
 package com.dezxxx.rest.util;
 
+import com.dezxxx.rest.exception.AppException;
 import com.dezxxx.rest.exception.RepositoryException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -23,6 +24,9 @@ public final class TransactionHelper {
             T result = action.apply(session);
             HibernateUtil.commitAndClose(session, tx);
             return result;
+        } catch (AppException e) {
+            HibernateUtil.rollbackAndClose(session, tx);
+            throw e;
         } catch (Exception e) {
             HibernateUtil.rollbackAndClose(session, tx);
             log.error("Transaction failed", e);
@@ -36,6 +40,9 @@ public final class TransactionHelper {
         try {
             action.accept(session);
             HibernateUtil.commitAndClose(session, tx);
+        } catch (AppException e) {
+            HibernateUtil.rollbackAndClose(session, tx);
+            throw e;
         } catch (Exception e) {
             HibernateUtil.rollbackAndClose(session, tx);
             log.error("Transaction failed", e);

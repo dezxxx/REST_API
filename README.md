@@ -44,18 +44,21 @@ Base URL: `http://localhost:8080/REST_API`
 | GET | `/users` | Get all users |
 | GET | `/users/{id}` | Get user by id |
 | POST | `/users` | Create user |
-| PUT | `/users/{id}` | Update user |
+| PUT | `/users/{id}` | Full update user |
+| PATCH | `/users/{id}` | Partial update user |
 | DELETE | `/users/{id}` | Delete user |
 | GET | `/files` | Get all files |
 | GET | `/files/{id}` | Get file by id |
 | POST | `/files` | Create file |
-| PUT | `/files/{id}` | Update file |
+| PUT | `/files/{id}` | Full update file |
+| PATCH | `/files/{id}` | Partial update file |
 | DELETE | `/files/{id}` | Delete file |
 | GET | `/events` | Get all events |
 | GET | `/events/{id}` | Get event by id |
 | GET | `/events/user/{userId}` | Get events by user |
 | POST | `/events` | Create event |
-| PUT | `/events/{id}` | Update event |
+| PUT | `/events/{id}` | Full update event |
+| PATCH | `/events/{id}` | Partial update event |
 | DELETE | `/events/{id}` | Delete event |
 
 Full interactive docs: `http://localhost:8080/REST_API/swagger-ui.html`
@@ -71,6 +74,21 @@ All API endpoints are protected with **HTTP Basic Auth**.
 In Postman: `Authorization` tab → Type: `Basic Auth` → enter credentials.  
 Swagger UI is accessible without authentication.
 
+## Delete Behavior
+
+**DELETE /users/{id}** — deletes the user and all their events (upload history). Files are not affected — they exist independently.
+
+**DELETE /files/{id}** — deletes the file only if it has no associated events. If events reference this file, returns `409 Conflict`. First delete the events, then the file.
+
+**DELETE /events/{id}** — deletes only the link between a user and a file. The user and the file remain intact.
+
+This mirrors real-world semantics: a user is responsible for their history, a file is not.
+
+## PUT vs PATCH
+
+- **PUT** — full update: all required fields must be provided
+- **PATCH** — partial update: only the fields you send are changed, the rest stay as-is
+
 ## Error Handling
 
 | Status | When |
@@ -78,7 +96,7 @@ Swagger UI is accessible without authentication.
 | 400 | Invalid/missing JSON body, blank fields, field too long, missing ID in path |
 | 401 | Missing or invalid Authorization header |
 | 404 | Entity not found by id |
-| 409 | Duplicate event — same user + file combination already exists |
+| 409 | Duplicate event (same user + file), or trying to delete a file that has events |
 | 500 | Unexpected server error |
 
 ## Running Locally
@@ -106,4 +124,4 @@ Or use the included `deploy.bat` script for quick redeploy to local Tomcat.
 mvn test
 ```
 
-40 tests covering all service implementations and entity validation.
+41 tests covering all service implementations and entity validation.
