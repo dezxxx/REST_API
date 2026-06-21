@@ -1,17 +1,56 @@
 openapi: 3.0.3
 info:
   title: File Manager REST API
-  description: REST API for managing users, files and upload history
   version: 1.0.0
+  description: |
+    REST API for managing users, files, and their upload history.
+
+    ## Entities
+
+    - **User** — a person who uploads files
+    - **File** — an uploaded file (name + path)
+    - **Event** — a link between a User and a File; represents the fact that a user uploaded that file
+
+    ## Authentication
+
+    All endpoints require **HTTP Basic Auth**.
+
+    | Username | Password |
+    |----------|----------|
+    | admin    | admin    |
+
+    In Postman: `Authorization` tab → Type: `Basic Auth`.
+
+    ## PUT vs PATCH
+
+    - **PUT** — full replacement: you must send all required fields
+    - **PATCH** — partial update: send only the fields you want to change; everything else stays as-is
+
+    ## Delete rules
+
+    - **DELETE /users/{id}** — deletes the user and all their events. Files are not affected.
+    - **DELETE /files/{id}** — only allowed if the file has no events. If it does, returns `409`. Delete the events first, then the file.
+    - **DELETE /events/{id}** — removes only the user-file link. Both the user and the file remain intact.
 
 servers:
   - url: /REST_API
 
+tags:
+  - name: Users
+    description: Create and manage users
+  - name: Files
+    description: Create and manage files
+  - name: Events
+    description: Manage links between users and files (upload history)
+
 paths:
+
+  # ─────────────── USERS ───────────────
 
   /users:
     get:
       summary: Get all users
+      description: Returns a list of all users. Each user includes their full event history (which files they are linked to).
       tags: [Users]
       responses:
         '200':
@@ -22,12 +61,26 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/User'
+              example:
+                - id: 1
+                  name: Ivan
+                  events:
+                    - id: 1
+                      file:
+                        id: 1
+                        name: report.pdf
+                        filePath: /uploads/report.pdf
+                - id: 2
+                  name: Sergey
+                  events: []
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
     post:
-      summary: Create user
+      summary: Create a new user
+      description: Creates a user with the given name. Name must not be blank and must not exceed 100 characters.
       tags: [Users]
       requestBody:
         required: true
@@ -35,13 +88,19 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserRequest'
+            example:
+              name: Ivan
       responses:
         '201':
-          description: Created user
+          description: User created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+              example:
+                id: 1
+                name: Ivan
+                events: []
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -52,6 +111,7 @@ paths:
   /users/{id}:
     get:
       summary: Get user by id
+      description: Returns a single user by their id, including their full event history.
       tags: [Users]
       parameters:
         - $ref: '#/components/parameters/IdParam'
@@ -62,14 +122,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+              example:
+                id: 1
+                name: Ivan
+                events:
+                  - id: 1
+                    file:
+                      id: 1
+                      name: report.pdf
+                      filePath: /uploads/report.pdf
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
     put:
-      summary: Full update user (all fields required)
+      summary: Full update of a user
+      description: |
+        Replaces all user fields with the provided values.
+        All required fields must be present in the request body.
+        The user's events are not affected.
       tags: [Users]
       parameters:
         - $ref: '#/components/parameters/IdParam'
@@ -79,13 +153,24 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserRequest'
+            example:
+              name: Sergey
       responses:
         '200':
-          description: Updated user
+          description: User updated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+              example:
+                id: 1
+                name: Sergey
+                events:
+                  - id: 1
+                    file:
+                      id: 1
+                      name: report.pdf
+                      filePath: /uploads/report.pdf
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -94,8 +179,13 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
     patch:
-      summary: Partial update user (only provided fields are updated)
+      summary: Partial update of a user
+      description: |
+        Updates only the fields provided in the request body.
+        Fields not included in the body are left unchanged.
+        Example: send only `name` to rename the user without affecting anything else.
       tags: [Users]
       parameters:
         - $ref: '#/components/parameters/IdParam'
@@ -105,13 +195,24 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserPatchRequest'
+            example:
+              name: Sergey
       responses:
         '200':
-          description: Updated user
+          description: User updated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+              example:
+                id: 1
+                name: Sergey
+                events:
+                  - id: 1
+                    file:
+                      id: 1
+                      name: report.pdf
+                      filePath: /uploads/report.pdf
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -120,20 +221,25 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
     delete:
       summary: Delete user
+      description: |
+        Deletes the user by id.
+        All events linked to this user are deleted automatically (cascade).
+        Files are **not** affected — they exist independently.
       tags: [Users]
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
         '200':
-          description: Deleted successfully
+          description: User deleted
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
               example:
-                message: "File deleted successfully"
+                message: User deleted successfully
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -141,9 +247,12 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  # ─────────────── FILES ───────────────
+
   /files:
     get:
       summary: Get all files
+      description: Returns a list of all files in the system.
       tags: [Files]
       responses:
         '200':
@@ -154,12 +263,24 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/File'
+              example:
+                - id: 1
+                  name: report.pdf
+                  filePath: /uploads/report.pdf
+                - id: 2
+                  name: photo.jpg
+                  filePath: /uploads/photo.jpg
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
     post:
-      summary: Create file
+      summary: Create a new file
+      description: |
+        Registers a new file with a name and a path.
+        Both fields are required and must not be blank.
+        The file is not linked to any user until an Event is created.
       tags: [Files]
       requestBody:
         required: true
@@ -167,13 +288,20 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FileRequest'
+            example:
+              name: report.pdf
+              filePath: /uploads/report.pdf
       responses:
         '201':
-          description: Created file
+          description: File created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/File'
+              example:
+                id: 1
+                name: report.pdf
+                filePath: /uploads/report.pdf
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -184,6 +312,7 @@ paths:
   /files/{id}:
     get:
       summary: Get file by id
+      description: Returns a single file by its id.
       tags: [Files]
       parameters:
         - $ref: '#/components/parameters/IdParam'
@@ -194,14 +323,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/File'
+              example:
+                id: 1
+                name: report.pdf
+                filePath: /uploads/report.pdf
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
     put:
-      summary: Full update file (all fields required)
+      summary: Full update of a file
+      description: |
+        Replaces all file fields with the provided values.
+        Both `name` and `filePath` are required.
       tags: [Files]
       parameters:
         - $ref: '#/components/parameters/IdParam'
@@ -211,13 +348,20 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FileRequest'
+            example:
+              name: report_final.pdf
+              filePath: /uploads/report_final.pdf
       responses:
         '200':
-          description: Updated file
+          description: File updated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/File'
+              example:
+                id: 1
+                name: report_final.pdf
+                filePath: /uploads/report_final.pdf
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -226,8 +370,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
     patch:
-      summary: Partial update file (only provided fields are updated)
+      summary: Partial update of a file
+      description: |
+        Updates only the fields provided in the request body.
+        Example: send only `name` to rename the file without changing its path.
       tags: [Files]
       parameters:
         - $ref: '#/components/parameters/IdParam'
@@ -237,13 +385,19 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FilePatchRequest'
+            example:
+              name: report_final.pdf
       responses:
         '200':
-          description: Updated file
+          description: File updated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/File'
+              example:
+                id: 1
+                name: report_final.pdf
+                filePath: /uploads/report.pdf
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -252,20 +406,30 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
     delete:
       summary: Delete file
+      description: |
+        Deletes the file by id.
+
+        **Important:** a file cannot be deleted if it has associated events (i.e. it is linked to one or more users).
+        Returns `409 Conflict` in that case.
+
+        To delete the file:
+        1. Delete all events that reference this file (`DELETE /events/{id}`)
+        2. Then delete the file
       tags: [Files]
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
         '200':
-          description: Deleted successfully
+          description: File deleted
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
               example:
-                message: "File deleted successfully"
+                message: File deleted successfully
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -281,9 +445,12 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  # ─────────────── EVENTS ───────────────
+
   /events:
     get:
       summary: Get all events
+      description: Returns all events — every user-file link in the system.
       tags: [Events]
       responses:
         '200':
@@ -294,12 +461,37 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Event'
+              example:
+                - id: 1
+                  user:
+                    id: 1
+                    name: Ivan
+                  file:
+                    id: 1
+                    name: report.pdf
+                    filePath: /uploads/report.pdf
+                - id: 2
+                  user:
+                    id: 2
+                    name: Sergey
+                  file:
+                    id: 1
+                    name: report.pdf
+                    filePath: /uploads/report.pdf
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
     post:
-      summary: Create event
+      summary: Create event (link user to file)
+      description: |
+        Creates a link between an existing user and an existing file.
+        This represents a user uploading (or being associated with) a file.
+
+        **Rules:**
+        - Both `user.id` and `file.id` must reference existing entities
+        - The same user-file combination can only exist once — returns `409` if it already exists
       tags: [Events]
       requestBody:
         required: true
@@ -307,27 +499,54 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EventRequest'
+            example:
+              user:
+                id: 1
+              file:
+                id: 1
       responses:
         '201':
-          description: Created event
+          description: Event created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Event'
+              example:
+                id: 1
+                user:
+                  id: 1
+                  name: Ivan
+                file:
+                  id: 1
+                  name: report.pdf
+                  filePath: /uploads/report.pdf
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
-          $ref: '#/components/responses/NotFound'
+          description: User or file not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "User not found with id: 99"
         '409':
-          $ref: '#/components/responses/Conflict'
+          description: This user-file combination already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Event already exists for user 1 and file 1"
         '500':
           $ref: '#/components/responses/InternalServerError'
 
   /events/{id}:
     get:
       summary: Get event by id
+      description: Returns a single event by its id, including the linked user and file.
       tags: [Events]
       parameters:
         - $ref: '#/components/parameters/IdParam'
@@ -338,14 +557,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Event'
+              example:
+                id: 1
+                user:
+                  id: 1
+                  name: Ivan
+                file:
+                  id: 1
+                  name: report.pdf
+                  filePath: /uploads/report.pdf
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
     put:
-      summary: Full update event (all fields required)
+      summary: Full update of an event
+      description: |
+        Changes the user-file link of an existing event.
+        Both `user.id` and `file.id` must be provided and must reference existing entities.
+        The new user-file combination must not already exist as another event.
       tags: [Events]
       parameters:
         - $ref: '#/components/parameters/IdParam'
@@ -355,13 +588,27 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EventRequest'
+            example:
+              user:
+                id: 2
+              file:
+                id: 2
       responses:
         '200':
-          description: Updated event
+          description: Event updated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Event'
+              example:
+                id: 1
+                user:
+                  id: 2
+                  name: Sergey
+                file:
+                  id: 2
+                  name: photo.jpg
+                  filePath: /uploads/photo.jpg
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -372,8 +619,13 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
     patch:
-      summary: Partial update event (only provided fields are updated)
+      summary: Partial update of an event
+      description: |
+        Updates only the provided fields of the event.
+        You can change just the user, just the file, or both at once.
+        The resulting user-file combination must not already exist as another event.
       tags: [Events]
       parameters:
         - $ref: '#/components/parameters/IdParam'
@@ -383,13 +635,25 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/EventPatchRequest'
+            example:
+              file:
+                id: 2
       responses:
         '200':
-          description: Updated event
+          description: Event updated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Event'
+              example:
+                id: 1
+                user:
+                  id: 1
+                  name: Ivan
+                file:
+                  id: 2
+                  name: photo.jpg
+                  filePath: /uploads/photo.jpg
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -400,20 +664,25 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
+
     delete:
       summary: Delete event
+      description: |
+        Removes the link between a user and a file.
+        The user and the file themselves are **not** deleted.
+        After deleting all events for a file, the file can then be deleted freely.
       tags: [Events]
       parameters:
         - $ref: '#/components/parameters/IdParam'
       responses:
         '200':
-          description: Deleted successfully
+          description: Event deleted
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
               example:
-                message: "File deleted successfully"
+                message: Event deleted successfully
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -423,7 +692,8 @@ paths:
 
   /events/user/{userId}:
     get:
-      summary: Get events by user id
+      summary: Get upload history for a user
+      description: Returns all events for a specific user — every file they are linked to.
       tags: [Events]
       parameters:
         - name: userId
@@ -431,6 +701,7 @@ paths:
           required: true
           schema:
             type: integer
+          example: 1
       responses:
         '200':
           description: List of events for the user
@@ -440,6 +711,23 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Event'
+              example:
+                - id: 1
+                  user:
+                    id: 1
+                    name: Ivan
+                  file:
+                    id: 1
+                    name: report.pdf
+                    filePath: /uploads/report.pdf
+                - id: 3
+                  user:
+                    id: 1
+                    name: Ivan
+                  file:
+                    id: 2
+                    name: photo.jpg
+                    filePath: /uploads/photo.jpg
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
@@ -454,6 +742,7 @@ components:
       required: true
       schema:
         type: integer
+      example: 1
 
   responses:
     BadRequest:
@@ -463,7 +752,7 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example:
-            error: "User name must not be blank"
+            error: "Name must not be blank"
     Unauthorized:
       description: Missing or invalid Basic Auth credentials
       content:
@@ -473,15 +762,15 @@ components:
           example:
             error: "Unauthorized"
     NotFound:
-      description: Resource not found
+      description: Entity not found by the given id
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example:
-            error: "User not found: 99"
+            error: "User not found with id: 99"
     Conflict:
-      description: Duplicate entry — this combination already exists
+      description: This user-file combination already exists
       content:
         application/json:
           schema:
@@ -498,17 +787,33 @@ components:
             error: "Internal server error"
 
   schemas:
+
     User:
       type: object
+      description: A user with their full upload history
       properties:
         id:
           type: integer
+          example: 1
         name:
           type: string
+          example: Ivan
         events:
           type: array
+          description: Files this user is linked to
           items:
-            $ref: '#/components/schemas/Event'
+            $ref: '#/components/schemas/EventSummary'
+
+    UserSummary:
+      type: object
+      description: Minimal user reference — used inside Event responses to avoid circular nesting
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Ivan
 
     UserRequest:
       type: object
@@ -520,21 +825,25 @@ components:
 
     UserPatchRequest:
       type: object
-      description: All fields are optional. Only provided fields will be updated.
+      description: All fields are optional. Only the fields you send will be updated.
       properties:
         name:
           type: string
-          example: Ivan
+          example: Sergey
 
     File:
       type: object
+      description: A registered file with its storage path
       properties:
         id:
           type: integer
+          example: 1
         name:
           type: string
+          example: report.pdf
         filePath:
           type: string
+          example: /uploads/report.pdf
 
     FileRequest:
       type: object
@@ -549,22 +858,34 @@ components:
 
     FilePatchRequest:
       type: object
-      description: All fields are optional. Only provided fields will be updated.
+      description: All fields are optional. Only the fields you send will be updated.
       properties:
         name:
           type: string
-          example: report.pdf
+          example: report_final.pdf
         filePath:
           type: string
-          example: /uploads/report.pdf
+          example: /uploads/report_final.pdf
 
     Event:
       type: object
+      description: A link between a user and a file (upload history record)
       properties:
         id:
           type: integer
+          example: 1
         user:
-          $ref: '#/components/schemas/User'
+          $ref: '#/components/schemas/UserSummary'
+        file:
+          $ref: '#/components/schemas/File'
+
+    EventSummary:
+      type: object
+      description: Minimal event reference — used inside User responses (user already known, not repeated)
+      properties:
+        id:
+          type: integer
+          example: 1
         file:
           $ref: '#/components/schemas/File'
 
@@ -574,12 +895,14 @@ components:
       properties:
         user:
           type: object
+          required: [id]
           properties:
             id:
               type: integer
               example: 1
         file:
           type: object
+          required: [id]
           properties:
             id:
               type: integer
@@ -587,7 +910,7 @@ components:
 
     EventPatchRequest:
       type: object
-      description: All fields are optional. Only provided fields will be updated.
+      description: All fields are optional. Only the fields you send will be updated.
       properties:
         user:
           type: object
@@ -600,16 +923,18 @@ components:
           properties:
             id:
               type: integer
-              example: 1
+              example: 2
 
     MessageResponse:
       type: object
       properties:
         message:
           type: string
+          example: User deleted successfully
 
     ErrorResponse:
       type: object
       properties:
         error:
           type: string
+          example: "User not found with id: 99"
