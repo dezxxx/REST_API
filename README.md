@@ -21,15 +21,15 @@ Built on a pure Java servlet stack — **no Spring** — to demonstrate deep und
 
 ```
 servlet/        ← HTTP layer: routing, request/response mapping
-service/impl/   ← Business logic: validation calls, existence checks
+service/        ← Business logic: validation, existence checks, business rules
 repository/impl/← Data access: HQL queries, Hibernate sessions
 filter/         ← Cross-cutting: Basic Auth on all API endpoints
 validation/     ← All entity validation in one place (Chain of Responsibility)
 ```
 
 **Key design decisions:**
-- `Repository<T>` — single generic interface, many implementations (GenericRepository pattern)
-- `EventRepository extends Repository<Event>` — the only extension, adds `findByUserId`
+- `Repository<T>` — single generic interface, extended by `UserRepository`, `FileRepository`, `EventRepository`
+- `EventRepository extends Repository<Event>` — adds `findByUserId`, `existsByUserAndFile`, `existsByFileId`
 - `TransactionHelper` — centralizes all try/catch/rollback logic
 - `EntityValidator` — all field validation in one class via fluent `ValidationChain`
 - `AppContextListener` — wires all singletons at startup, stores in `ServletContext`
@@ -124,4 +124,4 @@ Or use the included `deploy.bat` script for quick redeploy to local Tomcat.
 mvn test
 ```
 
-41 tests covering all service implementations and entity validation.
+53 tests covering all service classes and entity validation.
