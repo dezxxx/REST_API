@@ -33,15 +33,19 @@ public class EventService {
         EntityValidator.validate(event);
         Integer userId = event.getUser().getId();
         Integer fileId = event.getFile().getId();
-        userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User", userId));
-        fileRepository.findById(fileId)
-                .orElseThrow(() -> new EntityNotFoundException("File", fileId));
+        requireReferencesExist(userId, fileId);
         if (eventRepository.existsByUserAndFile(userId, fileId)) {
             throw new DuplicateEntityException("Event already exists for user " + userId + " and file " + fileId);
         }
         log.info("Creating event: userId={}, fileId={}", userId, fileId);
         return eventRepository.create(event);
+    }
+
+    private void requireReferencesExist(Integer userId, Integer fileId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User", userId));
+        fileRepository.findById(fileId)
+                .orElseThrow(() -> new EntityNotFoundException("File", fileId));
     }
 
     public Optional<Event> findById(Integer id) {
@@ -63,12 +67,7 @@ public class EventService {
         eventRepository.findById(event.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Event", event.getId()));
         EntityValidator.validate(event);
-        Integer userId = event.getUser().getId();
-        Integer fileId = event.getFile().getId();
-        userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User", userId));
-        fileRepository.findById(fileId)
-                .orElseThrow(() -> new EntityNotFoundException("File", fileId));
+        requireReferencesExist(event.getUser().getId(), event.getFile().getId());
         log.info("Updating event: id={}", event.getId());
         return eventRepository.update(event);
     }
