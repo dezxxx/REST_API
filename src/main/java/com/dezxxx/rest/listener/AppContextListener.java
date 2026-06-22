@@ -3,9 +3,9 @@ package com.dezxxx.rest.listener;
 import com.dezxxx.rest.repository.impl.EventRepositoryImpl;
 import com.dezxxx.rest.repository.impl.FileRepositoryImpl;
 import com.dezxxx.rest.repository.impl.UserRepositoryImpl;
-import com.dezxxx.rest.service.impl.EventServiceImpl;
-import com.dezxxx.rest.service.impl.FileServiceImpl;
-import com.dezxxx.rest.service.impl.UserServiceImpl;
+import com.dezxxx.rest.service.EventService;
+import com.dezxxx.rest.service.FileService;
+import com.dezxxx.rest.service.UserService;
 import com.dezxxx.rest.util.HibernateUtil;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
@@ -33,9 +33,9 @@ public class AppContextListener implements ServletContextListener {
         FileRepositoryImpl fileRepository = new FileRepositoryImpl();
         EventRepositoryImpl eventRepository = new EventRepositoryImpl();
 
-        ctx.setAttribute("userService", new UserServiceImpl(userRepository));
-        ctx.setAttribute("fileService", new FileServiceImpl(fileRepository));
-        ctx.setAttribute("eventService", new EventServiceImpl(eventRepository, userRepository, fileRepository));
+        ctx.setAttribute("userService", new UserService(userRepository));
+        ctx.setAttribute("fileService", new FileService(fileRepository, eventRepository));
+        ctx.setAttribute("eventService", new EventService(eventRepository, userRepository, fileRepository));
 
         log.info("Application started successfully");
     }

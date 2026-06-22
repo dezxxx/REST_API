@@ -1,7 +1,7 @@
 package com.dezxxx.rest.repository.impl;
 
 import com.dezxxx.rest.model.User;
-import com.dezxxx.rest.repository.Repository;
+import com.dezxxx.rest.repository.UserRepository;
 import com.dezxxx.rest.util.TransactionHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 
-public class UserRepositoryImpl implements Repository<User> {
+public class UserRepositoryImpl implements UserRepository {
 
     private static final Logger log = LoggerFactory.getLogger(UserRepositoryImpl.class);
 

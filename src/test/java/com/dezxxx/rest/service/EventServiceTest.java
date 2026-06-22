@@ -2,12 +2,13 @@ package com.dezxxx.rest.service;
 
 import com.dezxxx.rest.exception.DuplicateEntityException;
 import com.dezxxx.rest.exception.EntityNotFoundException;
+import com.dezxxx.rest.exception.ValidationException;
 import com.dezxxx.rest.model.Event;
 import com.dezxxx.rest.model.File;
 import com.dezxxx.rest.model.User;
-import com.dezxxx.rest.repository.Repository;
-import com.dezxxx.rest.repository.impl.EventRepositoryImpl;
-import com.dezxxx.rest.service.impl.EventServiceImpl;
+import com.dezxxx.rest.repository.EventRepository;
+import com.dezxxx.rest.repository.FileRepository;
+import com.dezxxx.rest.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,22 +22,22 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class EventServiceImplTest {
+class EventServiceTest {
 
     @Mock
-    private EventRepositoryImpl eventRepository;
+    private EventRepository eventRepository;
 
     @Mock
-    private Repository<User> userRepository;
+    private UserRepository userRepository;
 
     @Mock
-    private Repository<File> fileRepository;
+    private FileRepository fileRepository;
 
-    private EventServiceImpl eventService;
+    private EventService eventService;
 
     @BeforeEach
     void setUp() {
-        eventService = new EventServiceImpl(eventRepository, userRepository, fileRepository);
+        eventService = new EventService(eventRepository, userRepository, fileRepository);
     }
 
     @Test
@@ -57,6 +58,22 @@ class EventServiceImplTest {
         verify(userRepository).findById(1);
         verify(fileRepository).findById(2);
         verify(eventRepository).create(event);
+    }
+
+    @Test
+    void create_shouldThrowValidationException_whenUserIsNull() {
+        Event event = new Event(null, new File("report.pdf", "/uploads/report.pdf"));
+
+        assertThrows(ValidationException.class, () -> eventService.create(event));
+        verify(eventRepository, never()).create(any());
+    }
+
+    @Test
+    void create_shouldThrowValidationException_whenUserIdIsNull() {
+        Event event = new Event(new User("Ivan"), new File("report.pdf", "/uploads/report.pdf"));
+
+        assertThrows(ValidationException.class, () -> eventService.create(event));
+        verify(eventRepository, never()).create(any());
     }
 
     @Test
@@ -155,6 +172,17 @@ class EventServiceImplTest {
 
         assertThrows(EntityNotFoundException.class, () -> eventService.update(event));
         verify(eventRepository, never()).update(any());
+    }
+
+    @Test
+    void delete_shouldCallRepository_whenExists() {
+        Event event = new Event();
+        event.setId(1);
+        when(eventRepository.findById(1)).thenReturn(Optional.of(event));
+
+        eventService.delete(1);
+
+        verify(eventRepository).delete(1);
     }
 
     @Test

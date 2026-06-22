@@ -1,9 +1,9 @@
 package com.dezxxx.rest.service;
 
 import com.dezxxx.rest.exception.EntityNotFoundException;
+import com.dezxxx.rest.exception.ValidationException;
 import com.dezxxx.rest.model.User;
-import com.dezxxx.rest.repository.Repository;
-import com.dezxxx.rest.service.impl.UserServiceImpl;
+import com.dezxxx.rest.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,16 +17,16 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class UserServiceImplTest {
+class UserServiceTest {
 
     @Mock
-    private Repository<User> userRepository;
+    private UserRepository userRepository;
 
-    private UserServiceImpl userService;
+    private UserService userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserServiceImpl(userRepository);
+        userService = new UserService(userRepository);
     }
 
     @Test
@@ -38,6 +38,22 @@ class UserServiceImplTest {
 
         assertEquals(user, result);
         verify(userRepository).create(user);
+    }
+
+    @Test
+    void create_shouldThrowValidationException_whenNameIsBlank() {
+        User user = new User("   ");
+
+        assertThrows(ValidationException.class, () -> userService.create(user));
+        verify(userRepository, never()).create(any());
+    }
+
+    @Test
+    void create_shouldThrowValidationException_whenNameIsNull() {
+        User user = new User();
+
+        assertThrows(ValidationException.class, () -> userService.create(user));
+        verify(userRepository, never()).create(any());
     }
 
     @Test
@@ -82,6 +98,16 @@ class UserServiceImplTest {
 
         assertEquals(user, result);
         verify(userRepository).update(user);
+    }
+
+    @Test
+    void update_shouldThrowValidationException_whenNameIsBlank() {
+        User user = new User("   ");
+        user.setId(1);
+        when(userRepository.findById(1)).thenReturn(Optional.of(user));
+
+        assertThrows(ValidationException.class, () -> userService.update(user));
+        verify(userRepository, never()).update(any());
     }
 
     @Test

@@ -1,8 +1,7 @@
 package com.dezxxx.rest.repository.impl;
 
-import com.dezxxx.rest.exception.DependencyException;
 import com.dezxxx.rest.model.File;
-import com.dezxxx.rest.repository.Repository;
+import com.dezxxx.rest.repository.FileRepository;
 import com.dezxxx.rest.util.TransactionHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 
-public class FileRepositoryImpl implements Repository<File> {
+public class FileRepositoryImpl implements FileRepository {
 
     private static final Logger log = LoggerFactory.getLogger(FileRepositoryImpl.class);
 
@@ -54,14 +53,6 @@ public class FileRepositoryImpl implements Repository<File> {
         TransactionHelper.executeInTransaction(session -> {
             File file = session.get(File.class, id);
             if (file != null) {
-                Long eventCount = session.createQuery(
-                                "SELECT COUNT(e) FROM Event e WHERE e.file.id = :id", Long.class)
-                        .setParameter("id", id)
-                        .uniqueResult();
-                if (eventCount > 0) {
-                    throw new DependencyException(
-                            "Cannot delete file " + id + ": it has " + eventCount + " associated event(s)");
-                }
                 session.remove(file);
                 log.info("File deleted: id={}", id);
             }

@@ -2,9 +2,8 @@ package com.dezxxx.rest.servlet;
 
 import com.dezxxx.rest.exception.EntityNotFoundException;
 import com.dezxxx.rest.model.File;
-import com.dezxxx.rest.repository.Repository;
+import com.dezxxx.rest.service.FileService;
 import com.dezxxx.rest.util.JsonUtil;
-import com.dezxxx.rest.validation.EntityValidator;
 
 import java.util.Map;
 import javax.servlet.annotation.WebServlet;
@@ -15,11 +14,11 @@ import java.io.IOException;
 @WebServlet("/files/*")
 public class FileServlet extends BaseServlet {
 
-    private Repository<File> fileService;
+    private FileService fileService;
 
     @Override
     public void init() {
-        fileService = (Repository<File>) getServletContext().getAttribute("fileService");
+        fileService = (FileService) getServletContext().getAttribute("fileService");
     }
 
     @Override
@@ -56,7 +55,6 @@ public class FileServlet extends BaseServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             File file = JsonUtil.readBody(req, File.class);
-            EntityValidator.validate(file);
             File created = fileService.create(file);
             JsonUtil.writeResponse(resp, HttpServletResponse.SC_CREATED, created);
         } catch (Exception e) {
@@ -73,7 +71,6 @@ public class FileServlet extends BaseServlet {
                 return;
             }
             File file = JsonUtil.readBody(req, File.class);
-            EntityValidator.validate(file);
             file.setId(id);
             File updated = fileService.update(file);
             JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, updated);
@@ -93,7 +90,6 @@ public class FileServlet extends BaseServlet {
             File existing = fileService.findById(id)
                     .orElseThrow(() -> new EntityNotFoundException("File", id));
             File patched = JsonUtil.mergeBody(req, existing);
-            EntityValidator.validate(patched);
             File updated = fileService.update(patched);
             JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, updated);
         } catch (Exception e) {

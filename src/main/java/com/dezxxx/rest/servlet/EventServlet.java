@@ -2,9 +2,8 @@ package com.dezxxx.rest.servlet;
 
 import com.dezxxx.rest.exception.EntityNotFoundException;
 import com.dezxxx.rest.model.Event;
-import com.dezxxx.rest.repository.EventRepository;
+import com.dezxxx.rest.service.EventService;
 import com.dezxxx.rest.util.JsonUtil;
-import com.dezxxx.rest.validation.EntityValidator;
 
 import java.util.Map;
 import javax.servlet.annotation.WebServlet;
@@ -15,11 +14,11 @@ import java.io.IOException;
 @WebServlet("/events/*")
 public class EventServlet extends BaseServlet {
 
-    private EventRepository eventService;
+    private EventService eventService;
 
     @Override
     public void init() {
-        eventService = (EventRepository) getServletContext().getAttribute("eventService");
+        eventService = (EventService) getServletContext().getAttribute("eventService");
     }
 
     @Override
@@ -64,7 +63,6 @@ public class EventServlet extends BaseServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             Event event = JsonUtil.readBody(req, Event.class);
-            EntityValidator.validate(event);
             Event created = eventService.create(event);
             JsonUtil.writeResponse(resp, HttpServletResponse.SC_CREATED, created);
         } catch (Exception e) {
@@ -81,7 +79,6 @@ public class EventServlet extends BaseServlet {
                 return;
             }
             Event event = JsonUtil.readBody(req, Event.class);
-            EntityValidator.validate(event);
             event.setId(id);
             Event updated = eventService.update(event);
             JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, updated);
@@ -101,7 +98,6 @@ public class EventServlet extends BaseServlet {
             Event existing = eventService.findById(id)
                     .orElseThrow(() -> new EntityNotFoundException("Event", id));
             Event patched = JsonUtil.mergeBody(req, existing);
-            EntityValidator.validate(patched);
             Event updated = eventService.update(patched);
             JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, updated);
         } catch (Exception e) {

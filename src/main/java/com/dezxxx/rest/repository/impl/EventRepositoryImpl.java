@@ -75,6 +75,18 @@ public class EventRepositoryImpl implements EventRepository {
         });
     }
 
+    @Override
+    public boolean existsByFileId(Integer fileId) {
+        return TransactionHelper.executeInSession(session -> {
+            Long count = session.createQuery(
+                            "SELECT COUNT(e) FROM Event e WHERE e.file.id = :fileId",
+                            Long.class)
+                    .setParameter("fileId", fileId)
+                    .uniqueResult();
+            return count > 0;
+        });
+    }
+
     public boolean existsByUserAndFile(Integer userId, Integer fileId) {
         return TransactionHelper.executeInSession(session -> {
             Long count = session.createQuery(
