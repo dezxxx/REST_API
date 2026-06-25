@@ -36,23 +36,7 @@ public class EventServlet extends BaseServlet {
             if (id == null) {
                 JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, eventService.findAll());
             } else {
-                eventService.findById(id)
-                        .ifPresentOrElse(
-                                event -> {
-                                    try {
-                                        JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, event);
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                },
-                                () -> {
-                                    try {
-                                        JsonUtil.writeError(resp, HttpServletResponse.SC_NOT_FOUND, "Event not found: " + id);
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                }
-                        );
+                writeFoundOrNotFound(resp, eventService.findById(id), "Event not found: " + id);
             }
         } catch (Exception e) {
             handleException(resp, e);
@@ -64,6 +48,7 @@ public class EventServlet extends BaseServlet {
         try {
             Event event = JsonUtil.readBody(req, Event.class);
             Event created = eventService.create(event);
+            resp.setHeader("Location", req.getContextPath() + "/events/" + created.getId());
             JsonUtil.writeResponse(resp, HttpServletResponse.SC_CREATED, created);
         } catch (Exception e) {
             handleException(resp, e);

@@ -1,6 +1,7 @@
 package com.dezxxx.rest.servlet;
 
 import com.dezxxx.rest.exception.DependencyException;
+import java.util.Optional;
 import com.dezxxx.rest.exception.DuplicateEntityException;
 import com.dezxxx.rest.exception.EntityNotFoundException;
 import com.dezxxx.rest.exception.ValidationException;
@@ -74,6 +75,25 @@ public abstract class BaseServlet extends HttpServlet {
             log.error("Unexpected error", e);
             JsonUtil.writeError(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal server error");
         }
+    }
+
+    protected <T> void writeFoundOrNotFound(HttpServletResponse resp, Optional<T> result, String notFoundMessage) throws IOException {
+        result.ifPresentOrElse(
+                entity -> {
+                    try {
+                        JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, entity);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                () -> {
+                    try {
+                        JsonUtil.writeError(resp, HttpServletResponse.SC_NOT_FOUND, notFoundMessage);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+        );
     }
 
     private boolean hasConstraintViolation(Throwable e) {

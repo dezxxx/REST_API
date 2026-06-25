@@ -5,11 +5,11 @@ import com.dezxxx.rest.model.User;
 import com.dezxxx.rest.service.UserService;
 import com.dezxxx.rest.util.JsonUtil;
 
-import java.util.Map;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Map;
 
 @WebServlet("/users/*")
 public class UserServlet extends BaseServlet {
@@ -28,23 +28,7 @@ public class UserServlet extends BaseServlet {
             if (id == null) {
                 JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, userService.findAll());
             } else {
-                userService.findById(id)
-                        .ifPresentOrElse(
-                                user -> {
-                                    try {
-                                        JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, user);
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                },
-                                () -> {
-                                    try {
-                                        JsonUtil.writeError(resp, HttpServletResponse.SC_NOT_FOUND, "User not found: " + id);
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                }
-                        );
+                writeFoundOrNotFound(resp, userService.findById(id), "User not found: " + id);
             }
         } catch (Exception e) {
             handleException(resp, e);
@@ -56,6 +40,7 @@ public class UserServlet extends BaseServlet {
         try {
             User user = JsonUtil.readBody(req, User.class);
             User created = userService.create(user);
+            resp.setHeader("Location", req.getContextPath() + "/users/" + created.getId());
             JsonUtil.writeResponse(resp, HttpServletResponse.SC_CREATED, created);
         } catch (Exception e) {
             handleException(resp, e);

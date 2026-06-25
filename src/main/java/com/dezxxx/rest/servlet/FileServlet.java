@@ -28,23 +28,7 @@ public class FileServlet extends BaseServlet {
             if (id == null) {
                 JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, fileService.findAll());
             } else {
-                fileService.findById(id)
-                        .ifPresentOrElse(
-                                file -> {
-                                    try {
-                                        JsonUtil.writeResponse(resp, HttpServletResponse.SC_OK, file);
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                },
-                                () -> {
-                                    try {
-                                        JsonUtil.writeError(resp, HttpServletResponse.SC_NOT_FOUND, "File not found: " + id);
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                }
-                        );
+                writeFoundOrNotFound(resp, fileService.findById(id), "File not found: " + id);
             }
         } catch (Exception e) {
             handleException(resp, e);
@@ -56,6 +40,7 @@ public class FileServlet extends BaseServlet {
         try {
             File file = JsonUtil.readBody(req, File.class);
             File created = fileService.create(file);
+            resp.setHeader("Location", req.getContextPath() + "/files/" + created.getId());
             JsonUtil.writeResponse(resp, HttpServletResponse.SC_CREATED, created);
         } catch (Exception e) {
             handleException(resp, e);
