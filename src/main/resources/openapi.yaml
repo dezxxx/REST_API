@@ -35,6 +35,9 @@ info:
 servers:
   - url: /REST_API
 
+security:
+  - BasicAuth: []
+
 tags:
   - name: Users
     description: Create and manage users
@@ -735,6 +738,11 @@ paths:
 
 components:
 
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+
   parameters:
     IdParam:
       name: id
@@ -760,7 +768,7 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example:
-            error: "Unauthorized"
+            error: "Authentication required"
     NotFound:
       description: Entity not found by the given id
       content:
