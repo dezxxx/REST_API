@@ -35,19 +35,10 @@ public final class TransactionHelper {
     }
 
     public static void executeInTransaction(Consumer<Session> action) {
-        Session session = HibernateUtil.openSession();
-        Transaction tx = HibernateUtil.beginTransaction(session);
-        try {
+        executeInTransaction(session -> {
             action.accept(session);
-            HibernateUtil.commitAndClose(session, tx);
-        } catch (AppException e) {
-            HibernateUtil.rollbackAndClose(session, tx);
-            throw e;
-        } catch (Exception e) {
-            HibernateUtil.rollbackAndClose(session, tx);
-            log.error("Transaction failed", e);
-            throw new RepositoryException("Transaction failed: " + e.getMessage(), e);
-        }
+            return null;
+        });
     }
 
     public static <T> T executeInSession(Function<Session, T> action) {

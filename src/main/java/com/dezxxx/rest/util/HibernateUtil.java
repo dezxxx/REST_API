@@ -39,7 +39,11 @@ public final class HibernateUtil {
             tx.commit();
             log.debug("Transaction committed");
         } catch (Exception e) {
-            tx.rollback();
+            try {
+                tx.rollback();
+            } catch (Exception re) {
+                log.error("Rollback failed after commit error", re);
+            }
             log.error("Transaction rolled back", e);
             throw e;
         } finally {

@@ -6,8 +6,8 @@ import com.dezxxx.rest.repository.impl.UserRepositoryImpl;
 import com.dezxxx.rest.service.EventService;
 import com.dezxxx.rest.service.FileService;
 import com.dezxxx.rest.service.UserService;
+import com.dezxxx.rest.util.FlyWayConfig;
 import com.dezxxx.rest.util.HibernateUtil;
-import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +25,7 @@ public class AppContextListener implements ServletContextListener {
     public void contextInitialized(ServletContextEvent sce) {
         log.info("Application starting...");
 
-        runFlyway();
+        FlyWayConfig.runMigrations();
 
         ServletContext ctx = sce.getServletContext();
 
@@ -46,16 +46,4 @@ public class AppContextListener implements ServletContextListener {
         log.info("Application stopped");
     }
 
-    private void runFlyway() {
-        Flyway flyway = Flyway.configure()
-                .dataSource(
-                        "jdbc:mysql://localhost:3306/file_manager_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true",
-                        "root",
-                        "dezxxx"
-                )
-                .locations("classpath:db/migration")
-                .load();
-        flyway.migrate();
-        log.info("Flyway migration completed");
-    }
 }
