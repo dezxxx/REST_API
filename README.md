@@ -23,7 +23,6 @@ Built on a pure Java servlet stack — **no Spring** — to demonstrate deep und
 servlet/        ← HTTP layer: routing, request/response mapping
 service/        ← Business logic: validation, existence checks, business rules
 repository/impl/← Data access: HQL queries, Hibernate sessions
-filter/         ← Cross-cutting: Basic Auth on all API endpoints
 validation/     ← All entity validation in one place (Chain of Responsibility)
 ```
 
@@ -37,7 +36,7 @@ validation/     ← All entity validation in one place (Chain of Responsibility)
 
 ## API Endpoints
 
-Base URL: `http://localhost:8080/REST_API`
+Base URL: `http://localhost:8080/REST_API/api/v1`
 
 | Method | URL | Description |
 |--------|-----|-------------|
@@ -49,7 +48,8 @@ Base URL: `http://localhost:8080/REST_API`
 | DELETE | `/users/{id}` | Delete user |
 | GET | `/files` | Get all files |
 | GET | `/files/{id}` | Get file by id |
-| POST | `/files` | Create file |
+| GET | `/files/{id}/download` | Download file |
+| POST | `/files` | Upload file (multipart/form-data, field: `file`) |
 | PUT | `/files/{id}` | Full update file |
 | PATCH | `/files/{id}` | Partial update file |
 | DELETE | `/files/{id}` | Delete file |
@@ -63,16 +63,9 @@ Base URL: `http://localhost:8080/REST_API`
 
 Full interactive docs: `http://localhost:8080/REST_API/swagger-ui.html`
 
-## Authentication
+## Event Auto-Creation
 
-All API endpoints are protected with **HTTP Basic Auth**.
-
-| Username | Password |
-|----------|----------|
-| admin | admin |
-
-In Postman: `Authorization` tab → Type: `Basic Auth` → enter credentials.  
-Swagger UI is accessible without authentication.
+When uploading a file (`POST /files`), pass the `X-User-Id` header with the user's id — an event linking that user to the uploaded file will be created automatically.
 
 ## Delete Behavior
 
@@ -94,7 +87,6 @@ This mirrors real-world semantics: a user is responsible for their history, a fi
 | Status | When |
 |--------|------|
 | 400 | Invalid/missing JSON body, blank fields, field too long, missing ID in path |
-| 401 | Missing or invalid Authorization header |
 | 404 | Entity not found by id |
 | 409 | Duplicate event (same user + file), or trying to delete a file that has events |
 | 500 | Unexpected server error |
@@ -108,7 +100,7 @@ This mirrors real-world semantics: a user is responsible for their history, a fi
 CREATE DATABASE file_manager_db;
 ```
 
-2. Configure DB credentials in `AppContextListener` (host, user, password)
+2. Configure DB credentials in `src/main/resources/hibernate.cfg.xml`
 
 3. Build and deploy:
 ```bash
@@ -124,4 +116,4 @@ Or use the included `deploy.bat` script for quick redeploy to local Tomcat.
 mvn test
 ```
 
-53 tests covering all service classes and entity validation.
+104 tests covering all service, validation, and servlet layers.

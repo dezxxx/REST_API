@@ -1,0 +1,2 @@
+ALTER TABLE files ADD COLUMN content_type VARCHAR(100);
+ALTER TABLE files ADD COLUMN size BIGINT;

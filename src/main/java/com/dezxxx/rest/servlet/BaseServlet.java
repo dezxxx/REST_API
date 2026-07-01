@@ -36,15 +36,24 @@ public abstract class BaseServlet extends HttpServlet {
         JsonUtil.writeError(resp, HttpServletResponse.SC_METHOD_NOT_ALLOWED, "Method not allowed");
     }
 
-    protected Integer extractId(HttpServletRequest req) throws IOException {
+    protected Integer extractId(HttpServletRequest req) {
         String pathInfo = req.getPathInfo();
         if (pathInfo == null || pathInfo.equals("/")) {
             return null;
         }
+        String[] parts = pathInfo.split("/");
+        if (parts.length < 2 || parts[1].isBlank()) {
+            return null;
+        }
+        String rawId = parts[1];
         try {
-            return Integer.parseInt(pathInfo.substring(1));
+            int id = Integer.parseInt(rawId);
+            if (id <= 0) {
+                throw new IllegalArgumentException("Id must be positive: " + rawId);
+            }
+            return id;
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid id: " + pathInfo.substring(1));
+            throw new IllegalArgumentException("Invalid id: " + rawId);
         }
     }
 

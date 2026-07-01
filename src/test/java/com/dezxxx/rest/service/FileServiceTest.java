@@ -6,16 +6,22 @@ import com.dezxxx.rest.exception.ValidationException;
 import com.dezxxx.rest.model.File;
 import com.dezxxx.rest.repository.EventRepository;
 import com.dezxxx.rest.repository.FileRepository;
+import com.dezxxx.rest.util.FileStorageUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,34 +37,39 @@ class FileServiceTest {
 
     @BeforeEach
     void setUp() {
-        fileService = new FileService(fileRepository, eventRepository);
+        fileService = new FileService(fileRepository, eventRepository, "/tmp/storage");
     }
 
     @Test
-    void create_shouldReturnCreatedFile() {
-        File file = new File("report.pdf", "/uploads/report.pdf");
-        when(fileRepository.create(file)).thenReturn(file);
+    void upload_shouldSaveFileAndReturnMetadata() throws IOException {
+        InputStream content = new ByteArrayInputStream("data".getBytes());
+        File saved = new File("doc.txt", "/tmp/storage/uuid_doc.txt");
+        saved.setId(1);
 
-        File result = fileService.create(file);
+        try (MockedStatic<FileStorageUtil> fsUtil = mockStatic(FileStorageUtil.class)) {
+            fsUtil.when(() -> FileStorageUtil.save(any(), eq("doc.txt"), anyString()))
+                    .thenReturn("/tmp/storage/uuid_doc.txt");
+            when(fileRepository.create(any())).thenReturn(saved);
 
-        assertEquals(file, result);
-        verify(fileRepository).create(file);
+            File result = fileService.upload("doc.txt", "text/plain", 4L, content);
+
+            assertEquals(saved, result);
+            verify(fileRepository).create(any());
+        }
     }
 
     @Test
-    void create_shouldThrowValidationException_whenNameIsBlank() {
-        File file = new File("   ", "/uploads/report.pdf");
+    void upload_shouldThrowValidationException_whenNameIsBlank() {
+        InputStream content = new ByteArrayInputStream("data".getBytes());
 
-        assertThrows(ValidationException.class, () -> fileService.create(file));
-        verify(fileRepository, never()).create(any());
-    }
+        try (MockedStatic<FileStorageUtil> fsUtil = mockStatic(FileStorageUtil.class)) {
+            fsUtil.when(() -> FileStorageUtil.save(any(), anyString(), anyString()))
+                    .thenReturn("/tmp/storage/uuid_");
 
-    @Test
-    void create_shouldThrowValidationException_whenFilePathIsBlank() {
-        File file = new File("report.pdf", "   ");
-
-        assertThrows(ValidationException.class, () -> fileService.create(file));
-        verify(fileRepository, never()).create(any());
+            assertThrows(ValidationException.class,
+                    () -> fileService.upload("   ", "text/plain", 4L, content));
+            verify(fileRepository, never()).create(any());
+        }
     }
 
     @Test

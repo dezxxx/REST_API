@@ -7,5 +7,10 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 echo Deploying to Tomcat...
-copy /Y target\REST_API-1.0-SNAPSHOT.war "D:\Program Files\apache-tomcat-9.0.118\webapps\REST_API.war"
+copy /Y target\REST_API.war "D:\Program Files\apache-tomcat-9.0.118\webapps\REST_API.war"
+if %errorlevel% neq 0 (
+    echo COPY FAILED
+    pause
+    exit /b 1
+)
 echo Done! Tomcat will redeploy automatically.

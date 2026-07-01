@@ -10,27 +10,48 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class EntityValidatorTest {
 
+    // --- validateForCreate (User) ---
+
     @Test
-    void validateUser_shouldPass_whenValid() {
-        assertDoesNotThrow(() -> EntityValidator.validate(new User("Ivan")));
+    void validateForCreate_shouldPass_whenValid() {
+        assertDoesNotThrow(() -> EntityValidator.validateForCreate(new User("Ivan")));
     }
 
     @Test
-    void validateUser_shouldThrow_whenNameIsNull() {
-        User user = new User();
-        assertThrows(ValidationException.class, () -> EntityValidator.validate(user));
+    void validateForCreate_shouldThrow_whenUserIsNull() {
+        assertThrows(ValidationException.class, () -> EntityValidator.validateForCreate(null));
     }
 
     @Test
-    void validateUser_shouldThrow_whenNameIsBlank() {
+    void validateForCreate_shouldThrow_whenNameIsNull() {
+        assertThrows(ValidationException.class, () -> EntityValidator.validateForCreate(new User()));
+    }
+
+    @Test
+    void validateForCreate_shouldThrow_whenNameIsBlank() {
+        assertThrows(ValidationException.class, () -> EntityValidator.validateForCreate(new User("   ")));
+    }
+
+    @Test
+    void validateForCreate_shouldThrow_whenNameExceedsMaxLength() {
+        assertThrows(ValidationException.class, () -> EntityValidator.validateForCreate(new User("A".repeat(256))));
+    }
+
+    // --- validateForUpdate (User) ---
+
+    @Test
+    void validateForUpdate_shouldPass_whenNameValid() {
+        User user = new User("Ivan");
+        assertDoesNotThrow(() -> EntityValidator.validateForUpdate(user));
+    }
+
+    @Test
+    void validateForUpdate_shouldThrow_whenNameIsBlank() {
         User user = new User("   ");
-        assertThrows(ValidationException.class, () -> EntityValidator.validate(user));
+        assertThrows(ValidationException.class, () -> EntityValidator.validateForUpdate(user));
     }
 
-    @Test
-    void validateUser_shouldThrow_whenUserIsNull() {
-        assertThrows(ValidationException.class, () -> EntityValidator.validate((User) null));
-    }
+    // --- validate (File) ---
 
     @Test
     void validateFile_shouldPass_whenValid() {
@@ -38,21 +59,27 @@ class EntityValidatorTest {
     }
 
     @Test
-    void validateFile_shouldThrow_whenNameIsNull() {
-        File file = new File(null, "/uploads/report.pdf");
-        assertThrows(ValidationException.class, () -> EntityValidator.validate(file));
-    }
-
-    @Test
-    void validateFile_shouldThrow_whenFilePathIsBlank() {
-        File file = new File("report.pdf", "   ");
-        assertThrows(ValidationException.class, () -> EntityValidator.validate(file));
-    }
-
-    @Test
     void validateFile_shouldThrow_whenFileIsNull() {
         assertThrows(ValidationException.class, () -> EntityValidator.validate((File) null));
     }
+
+    @Test
+    void validateFile_shouldThrow_whenNameIsNull() {
+        assertThrows(ValidationException.class, () -> EntityValidator.validate(new File(null, "/uploads/report.pdf")));
+    }
+
+    @Test
+    void validateFile_shouldThrow_whenNameIsBlank() {
+        assertThrows(ValidationException.class, () -> EntityValidator.validate(new File("   ", "/uploads/report.pdf")));
+    }
+
+    @Test
+    void validateFile_shouldThrow_whenNameExceedsMaxLength() {
+        assertThrows(ValidationException.class,
+                () -> EntityValidator.validate(new File("A".repeat(256), "/uploads/report.pdf")));
+    }
+
+    // --- validate (Event) ---
 
     @Test
     void validateEvent_shouldPass_whenValid() {
@@ -64,47 +91,27 @@ class EntityValidatorTest {
     }
 
     @Test
+    void validateEvent_shouldThrow_whenEventIsNull() {
+        assertThrows(ValidationException.class, () -> EntityValidator.validate((Event) null));
+    }
+
+    @Test
     void validateEvent_shouldThrow_whenUserIsNull() {
         File file = new File("report.pdf", "/uploads/report.pdf");
         file.setId(1);
-        Event event = new Event(null, file);
-        assertThrows(ValidationException.class, () -> EntityValidator.validate(event));
+        assertThrows(ValidationException.class, () -> EntityValidator.validate(new Event(null, file)));
     }
 
     @Test
     void validateEvent_shouldThrow_whenUserIdIsNull() {
-        Event event = new Event(new User("Ivan"), new File("report.pdf", "/uploads/report.pdf"));
-        assertThrows(ValidationException.class, () -> EntityValidator.validate(event));
+        assertThrows(ValidationException.class,
+                () -> EntityValidator.validate(new Event(new User("Ivan"), new File("report.pdf", "/path"))));
     }
 
     @Test
     void validateEvent_shouldThrow_whenFileIsNull() {
         User user = new User("Ivan");
         user.setId(1);
-        Event event = new Event(user, null);
-        assertThrows(ValidationException.class, () -> EntityValidator.validate(event));
-    }
-
-    @Test
-    void validateEvent_shouldThrow_whenEventIsNull() {
-        assertThrows(ValidationException.class, () -> EntityValidator.validate((Event) null));
-    }
-
-    @Test
-    void validateUser_shouldThrow_whenNameExceedsMaxLength() {
-        User user = new User("A".repeat(256));
-        assertThrows(ValidationException.class, () -> EntityValidator.validate(user));
-    }
-
-    @Test
-    void validateFile_shouldThrow_whenNameExceedsMaxLength() {
-        File file = new File("A".repeat(256), "/uploads/report.pdf");
-        assertThrows(ValidationException.class, () -> EntityValidator.validate(file));
-    }
-
-    @Test
-    void validateFile_shouldThrow_whenFilePathExceedsMaxLength() {
-        File file = new File("report.pdf", "/".repeat(501));
-        assertThrows(ValidationException.class, () -> EntityValidator.validate(file));
+        assertThrows(ValidationException.class, () -> EntityValidator.validate(new Event(user, null)));
     }
 }

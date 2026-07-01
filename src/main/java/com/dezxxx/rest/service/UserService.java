@@ -21,7 +21,7 @@ public class UserService {
     }
 
     public User create(User user) {
-        EntityValidator.validate(user);
+        EntityValidator.validateForCreate(user);
         log.info("Creating user: name={}", user.getName());
         return userRepository.create(user);
     }
@@ -36,12 +36,15 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User update(User user) {
-        userRepository.findById(user.getId())
-                .orElseThrow(() -> new EntityNotFoundException("User", user.getId()));
-        EntityValidator.validate(user);
-        log.info("Updating user: id={}", user.getId());
-        return userRepository.update(user);
+    public User update(User patch) {
+        User existing = userRepository.findById(patch.getId())
+                .orElseThrow(() -> new EntityNotFoundException("User", patch.getId()));
+        if (patch.getName() != null && !patch.getName().isBlank()) {
+            existing.setName(patch.getName());
+        }
+        EntityValidator.validateForUpdate(existing);
+        log.info("Updating user: id={}", existing.getId());
+        return userRepository.update(existing);
     }
 
     public void delete(Integer id) {

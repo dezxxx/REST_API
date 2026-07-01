@@ -10,7 +10,13 @@ public final class EntityValidator {
     private EntityValidator() {
     }
 
-    public static void validate(User user) {
+    public static void validateForCreate(User user) {
+        chain(user, "User")
+                .notBlank(user.getName(), "User name")
+                .maxLength(user.getName(), 255, "User name");
+    }
+
+    public static void validateForUpdate(User user) {
         chain(user, "User")
                 .notBlank(user.getName(), "User name")
                 .maxLength(user.getName(), 255, "User name");
@@ -19,9 +25,7 @@ public final class EntityValidator {
     public static void validate(File file) {
         chain(file, "File")
                 .notBlank(file.getName(), "File name")
-                .maxLength(file.getName(), 255, "File name")
-                .notBlank(file.getFilePath(), "File path")
-                .maxLength(file.getFilePath(), 500, "File path");
+                .maxLength(file.getName(), 255, "File name");
     }
 
     public static void validate(Event event) {
@@ -53,6 +57,12 @@ public final class EntityValidator {
         ValidationChain maxLength(String value, int max, String fieldName) {
             if (value != null && value.length() > max)
                 throw new ValidationException(fieldName + " must not exceed " + max + " characters");
+            return this;
+        }
+
+        ValidationChain minLength(String value, int min, String fieldName) {
+            if (value != null && value.length() < min)
+                throw new ValidationException(fieldName + " must be at least " + min + " characters");
             return this;
         }
     }

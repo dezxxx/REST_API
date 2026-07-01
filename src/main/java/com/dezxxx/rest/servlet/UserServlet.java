@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Map;
 
-@WebServlet("/users/*")
+@WebServlet("/api/v1/users/*")
 public class UserServlet extends BaseServlet {
 
     private UserService userService;
@@ -40,7 +40,7 @@ public class UserServlet extends BaseServlet {
         try {
             User user = JsonUtil.readBody(req, User.class);
             User created = userService.create(user);
-            resp.setHeader("Location", req.getContextPath() + "/users/" + created.getId());
+            resp.setHeader("Location", req.getContextPath() + "/api/v1/users/" + created.getId());
             JsonUtil.writeResponse(resp, HttpServletResponse.SC_CREATED, created);
         } catch (Exception e) {
             handleException(resp, e);

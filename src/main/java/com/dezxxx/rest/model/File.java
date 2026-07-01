@@ -18,6 +18,12 @@ public class File {
     @Column(name = "file_path", nullable = false)
     private String filePath;
 
+    @Column(name = "content_type")
+    private String contentType;
+
+    @Column
+    private Long size;
+
     public File() {
     }
 
@@ -48,6 +54,22 @@ public class File {
 
     public void setFilePath(String filePath) {
         this.filePath = filePath;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public Long getSize() {
+        return size;
+    }
+
+    public void setSize(Long size) {
+        this.size = size;
     }
 
     @Override

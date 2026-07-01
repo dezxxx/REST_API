@@ -33,8 +33,10 @@ public class AppContextListener implements ServletContextListener {
         FileRepositoryImpl fileRepository = new FileRepositoryImpl();
         EventRepositoryImpl eventRepository = new EventRepositoryImpl();
 
+        String storagePath = ctx.getInitParameter("storagePath");
+
         ctx.setAttribute("userService", new UserService(userRepository));
-        ctx.setAttribute("fileService", new FileService(fileRepository, eventRepository));
+        ctx.setAttribute("fileService", new FileService(fileRepository, eventRepository, storagePath));
         ctx.setAttribute("eventService", new EventService(eventRepository, userRepository, fileRepository));
 
         log.info("Application started successfully");

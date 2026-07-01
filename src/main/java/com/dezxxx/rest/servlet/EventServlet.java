@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@WebServlet("/events/*")
+@WebServlet("/api/v1/events/*")
 public class EventServlet extends BaseServlet {
 
     private EventService eventService;
@@ -48,7 +48,7 @@ public class EventServlet extends BaseServlet {
         try {
             Event event = JsonUtil.readBody(req, Event.class);
             Event created = eventService.create(event);
-            resp.setHeader("Location", req.getContextPath() + "/events/" + created.getId());
+            resp.setHeader("Location", req.getContextPath() + "/api/v1/events/" + created.getId());
             JsonUtil.writeResponse(resp, HttpServletResponse.SC_CREATED, created);
         } catch (Exception e) {
             handleException(resp, e);
